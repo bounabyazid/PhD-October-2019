@@ -385,5 +385,3 @@ def Download_DataSetFromCSV():
 #Data = Download_DataSet()
 
 #Download_DataSetFromCSV()
-
-Data = AllThing('EUxZpTv')

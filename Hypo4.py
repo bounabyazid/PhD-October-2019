@@ -16,6 +16,8 @@ from ImgurComments import Countries,galeries
 from senti_client import sentistrength
 from scipy.stats.stats import pearsonr
 
+# Inconsistancy of Text
+
 DataSet = '/home/polo/.config/spyder-py3/PhD/PhD October 2019/Tourism48'
 
 senti = sentistrength('EN')
@@ -42,13 +44,17 @@ def Sentiments_Analysis():
         print(str(i+1) + ' : ' + Country)
         for j in range (10):
             Comments,Data = Load_GalLery_Textual_Data(Country, Galeries_Matrix[i,j])
-            Sentiments.append(round(mean([float(i) for i in Senti_List(Comments)]),2))
-            NbComments.append(len(Comments))
+            S = round(mean([float(i) for i in Senti_List(Comments)]),2)
+            if S < 0:
+               Sentiments.append(S)
+               NbComments.append(len(Comments))
+            
         i+=1
     return Sentiments,NbComments
 
-def Hypo2():
+def Hypo4():
     Sentiments,NbComments = Sentiments_Analysis()
     r,p = pearsonr(NbComments, Sentiments)
-    return r
+    return round(r,2)
 
+r = Hypo4()

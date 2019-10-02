@@ -15,7 +15,7 @@ def Load_GalLery_Textual_Data(Country, gallery_id):
          Data = json.load(data_file)
          S = []
          S.append(Data['title'])
-         S.append(x['comment'] for x in Data['Comments'])
+         S.extend([x['comment'] for x in Data['Comments']])
          #List.extend(get_Replies(x['children']) for x in Data['Comments'] if get_Replies(x['children']))
          [S.extend(get_Replies(x['children'])) for x in Data['Comments'] if get_Replies(x['children'])]
     return S,Data
@@ -61,3 +61,5 @@ def Load_GoogleVision_Labels(Country,gallery_id):
              S = [x['description'] for x in Data['webDetection']['webEntities'] if 'description' in x.keys()]
          S.append(Data['webDetection']['bestGuessLabels'][0]['label'])
     return S,Data
+
+#Comments,Data = Load_GalLery_Textual_Data('Algeria', 'x6TwpSQ')

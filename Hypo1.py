@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt
 from ImgurComments import Countries,galeries
 from LoadTextData import Load_GalLery_Textual_Data
 
+from Hypo2 import Sentiments_Analysis
+
 import imquality.brisque as brisque
 import PIL.Image
 
@@ -64,11 +66,16 @@ def Referenssless_Image_Quality_Assessment():
 
 def Hypo1():
     pickle_in = open("QScores.pkl","rb")
-    QScores = pickle.load(pickle_in)
-    NbComments = Number_of_Comments()
     
-    return NbComments, QScores
+    QScores = pickle.load(pickle_in)
+    #NbComments = Number_of_Comments()
+    Sentiments,NbComments = Sentiments_Analysis()
+    
+    r,p = pearsonr(NbComments, QScores)
+    print('Correlation between Images quialty vs Comments Number = ',round(r,2))
+    
+    r,p = pearsonr(Sentiments, QScores)
+    print('Correlation between Images quialty vs Sentiments = ',round(r,2))
 
-NbComments, QScores = Hypo1()
-
-r,p = pearsonr(NbComments, QScores)
+    return QScores, NbComments, Sentiments
+QScores, NbComments, Sentiments = Hypo1()
