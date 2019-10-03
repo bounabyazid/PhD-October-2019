@@ -4,55 +4,113 @@
 Created on Tus Oct  7 11:00:00 2019
 @author: Yazid BOUNAB
 """
+import os
+import json
+import pandas
+
 import numpy as np
 from statistics import mean 
 import matplotlib.pyplot as plt
-from LoadTextData import Load_GalLery_Textual_Data
+from LoadTextData import Load_GalLery_Textual_Data, Load_GoogleVision_Labels, Load_Google_Labels
 
 from ImgurComments import Countries,galeries
 
 from senti_client import sentistrength
 from scipy.stats.stats import pearsonr
 
-# Bening Envy
+# Luxuriousness attracts user's interests
 
 DataSet = '/home/polo/.config/spyder-py3/PhD/PhD October 2019/Tourism48'
 
 senti = sentistrength('EN')
 
-def Senti_List(List):
-    Senti_Labels = []
-    Score = []
-    for label in List:
-        Dict = {}
-        res = senti.get_sentiment(label)
-        Dict[label] = res
-        Senti_Labels.append(Dict)
-        Score.append(res['neutral'])
-    #return Senti_Labels,Score
-    return Score
+luxury = [
+          ['bicsU','ePVGARS','TzZocYt','V3dW4Dn','ZqCU9wv'],
+          ['6aCY1be','0fGGq','ZTGHc'],
+          ['p8iAlVe','PcO48fK','SJ8Lo','xsBKJJ5','Y6qMZTX'],
+          ['i56JLpa','PLn0Owa','spfNPNO','y5CDWGk'],
+          ['LX9OS','sN6Y5WH'],
+          ['CNVj2p5','DNF4IWn','fgb1NW8','joBhaAt','mMxSAT6'],
+          ['lY15s','mwLdDmt','PpN8ZYn','PpN8ZYn'],
+          ['6S9f8o7','COAND','S44YI5R','xsX5pyC'],
+          ['1S0iQ1v','aiBgw4H','HRoAKgZ','JWWfhpp','kmAu4Hv','Lvh407h','NRAjuGF'],
+          ['Q5I1F','YsR0y','RdQVSBB'],
+          
+          ['C0w9u4L','lGpGyyG'],
+          ['5cIntm3','5lJ5myr','E4ALLZr','wx4VIGt'],
+          ['1yWxOji','5xJiRFp','9hDeL37','hyO7iLB','Oj2Rb'],
+          ['7Q87LqL','Gi0jc','v15Ie'],
+          ['10HQj2K','fqqdVPR'],
+          ['0ox974Z','D64oGRw','EySdGX7','f8NBx6l'],
+          ['hHjflRD','ldOMnZh','mBpgfPo','QqntK','xmcvF'],
+          ['3DFWMYu','CfG7H0F','hdzELGJ','n8FMpoV','QaUaE6t','qxChgJm','WnQyqfo','Zdky8JL'],
+          ['rkjlGvw','sTUpBCS'],
+          ['gonkB'],
+          
+          ['7IJXO','76Ooc','du4L6sy','ma1PO4W','R4Ty7'],
+          ['6v8HmHE','CLLDz','MHrnQCe','RdgMIOZ'],
+          ['1MZ2Z7l','Ajf9g3D','FDZ3lTW','HSqPaLA','iHnbahA','lceHsT6','XInPbu9'],
+          ['i0mKUbv','IgIHvF5','lYUup','UtQgTH7','X6E86'],
+          ['GFaDI','xYGcnRd','z9YPKuz'],
+          ['0FFKc','rRKKhZF','syczAV4','TFYEj'],
+          ['2lxW8ZK','Ep4Us','fgR0tGr','J0aS5e2'],
+          ['GLS5sCL','HjrlFFC'],
+          ['1WJ2oAA','2MMPfGr','5um4InX','OadXq','TXjepX0','U2MVdYz'],
+          ['onTB5vb','ZvxtR1v'],
+          
+          ['ATb31Dj','h7bTe','IaV1fW9','m9QsAQh','Og6eUW0','wk9XARA'],
+          ['tobnp'],
+          ['IjWju','n8iaOQw','SsYSw4z'],
+          ['2Vn789J','6xtXgHp','aKVjDox','iiLcAjM'],
+          ['867Sv6G','5586I'],
+          ['62fI8Nf','xenUl'],
+          ['4fu8moV','bMklK','k8QL66z'],
+          ['bO1oiuK','c2fSBez','E5A3H2p'],
+          ['9MPH3','atkml','WixNSG5','Yuoe5UZ'],
+          ['kAZVc','NjCzt'],
+          
+          ['30JQ5c4','OshTmjE','PvDi8','SFBUW08','vkIXqNa'],
+          ['2xXjL','82yaC9e','kS02H9B','kYSWkmD','p3lodH8','QhjBRh9'],
+          ['1YjteIr','gUjLLN3','VT3Hd'],
+          ['Aeh8MFi','B36odyf'],
+          ['e3U8O','Ice3sai','T22O5TO','vcwrYpX'],
+          ['4EUZ6mi','9hOdzsx','dAKfsJx','Q89Sg','SlTRt'],
+          ['24e466c','92JMtKi','EkvaUDH','Es7VHhT','gCVE8J5','o0OauLV','WG1Yg1H','YvjbdNW'],
+          ['75rbKac','ahPtwMS','bvxZ8Th','djCGk6D','MTRo5','vk6QXAM']
+          ]
 
-def Sentiments_Analysis(Threshold):
+def Luxury_Labels():
+    Luxurykeys = []
+    i = 0
+       
+    for Country in sorted(Countries):
+        #print(str(i+1) + ' : ' + Country)
+        for gallery_id in luxury[i]:
+            if os.path.isdir(DataSet+'/'+Country+'/'+gallery_id):
+               #print(gallery_id) 
+               Labels,jData = Load_Google_Labels(Country, gallery_id)
+               Luxurykeys.extend(Labels)
+        i+=1
+    
+    df = pandas.DataFrame(data={"Luxury keys": sorted(list(set(Luxurykeys)))})
+    df.to_csv("Luxury keys.csv", sep=',',index=False, encoding="utf-8")
+
+def Luxuey_vs_users():
     Galeries_Matrix = np.array(galeries).reshape(len(Countries),10)
     
-    Sentiments = []
     NbComments = []
     i = 0
     for Country in Countries:
         print(str(i+1) + ' : ' + Country)
         for j in range (10):
-            Comments,Data = Load_GalLery_Textual_Data(Country, Galeries_Matrix[i,j])
-            S = round(mean([float(i) for i in Senti_List(Comments)]),2)
-            if abs(S) >= Threshold:
-               Sentiments.append(S)
-               NbComments.append(len(Comments))
+            Labels,jData = Load_Google_Labels(Country, Galeries_Matrix[i,j])
+            for label in Labels:
+                if label in Luxurykeys:
+                   Comments,Data = Load_GalLery_Textual_Data(Country, Galeries_Matrix[i,j])
+                   NbComments.append(len(Comments))
         i+=1
-    return Sentiments,NbComments
+    return NbComments
 
 def Hypo5():
-    Sentiments,NbComments = Sentiments_Analysis(3)
-    r,p = pearsonr(NbComments, Sentiments)
-    return round(r,2)
-
-#r = Hypo5()
-Sentiments,NbComments = Sentiments_Analysis(0.5)
+    NbComments = Luxuey_vs_users()
+    

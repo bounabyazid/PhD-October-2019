@@ -16,23 +16,15 @@ from ImgurComments import Countries,galeries
 from senti_client import sentistrength
 from scipy.stats.stats import pearsonr
 
+# Users appreciate more nature like pics.
+
 DataSet = '/home/polo/.config/spyder-py3/PhD/PhD October 2019/Tourism48'
 
-senti = sentistrength('EN')
+def NaturePic():
+    #there must be a list of keywords that represent nature pictures
+    return True
 
-def Senti_List(List):
-    Senti_Labels = []
-    Score = []
-    for label in List:
-        Dict = {}
-        res = senti.get_sentiment(label)
-        Dict[label] = res
-        Senti_Labels.append(Dict)
-        Score.append(res['neutral'])
-    #return Senti_Labels,Score
-    return Score
-
-def Sentiments_Analysis():
+def NaturePics_Vs_Comments():
     Galeries_Matrix = np.array(galeries).reshape(len(Countries),10)
     
     Sentiments = []
@@ -42,13 +34,13 @@ def Sentiments_Analysis():
         print(str(i+1) + ' : ' + Country)
         for j in range (10):
             Comments,Data = Load_GalLery_Textual_Data(Country, Galeries_Matrix[i,j])
-            Sentiments.append(round(mean([float(i) for i in Senti_List(Comments)]),2))
+            Sentiments.append(round(mean([float(i) for i in NaturePic(Comments)]),2))
             NbComments.append(len(Comments))
         i+=1
     return Sentiments,NbComments
 
 def Hypo2():
-    Sentiments,NbComments = Sentiments_Analysis()
+    Sentiments,NbComments = NaturePics_Vs_Comments()
     r,p = pearsonr(NbComments, Sentiments)
     return r
 
