@@ -5,26 +5,30 @@ Created on Tus Oct  7 11:00:00 2019
 @author: Yazid BOUNAB
 """
 import os
-import json
-import pandas
-
 import numpy as np
-from statistics import mean 
+import pandas as pd
+import scipy.stats as stats
+import researchpy as rp
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
+    
 import matplotlib.pyplot as plt
+
 from LoadTextData import Load_GalLery_Textual_Data, Load_GoogleVision_Labels, Load_Google_Labels
 
 from ImgurComments import Countries,galeries
 
 from senti_client import sentistrength
-from scipy.stats.stats import pearsonr
 
 # Luxuriousness attracts user's interests
+
+#https://pythonfordatascience.org/anova-python/
 
 DataSet = '/home/polo/.config/spyder-py3/PhD/PhD October 2019/Tourism48'
 
 senti = sentistrength('EN')
 
-luxury = [
+Luxury = [
           ['bicsU','ePVGARS','TzZocYt','V3dW4Dn','ZqCU9wv'],
           ['6aCY1be','0fGGq','ZTGHc'],
           ['p8iAlVe','PcO48fK','SJ8Lo','xsBKJJ5','Y6qMZTX'],
@@ -85,7 +89,7 @@ def Luxury_Labels():
        
     for Country in sorted(Countries):
         #print(str(i+1) + ' : ' + Country)
-        for gallery_id in luxury[i]:
+        for gallery_id in Luxury[i]:
             if os.path.isdir(DataSet+'/'+Country+'/'+gallery_id):
                #print(gallery_id) 
                Labels,jData = Load_Google_Labels(Country, gallery_id)
@@ -95,7 +99,7 @@ def Luxury_Labels():
     df = pandas.DataFrame(data={"Luxury keys": sorted(list(set(Luxurykeys)))})
     df.to_csv("Luxury keys.csv", sep=',',index=False, encoding="utf-8")
 
-def Luxuey_vs_users():
+def Luxury_vs_users():
     Galeries_Matrix = np.array(galeries).reshape(len(Countries),10)
     
     NbComments = []
@@ -108,9 +112,50 @@ def Luxuey_vs_users():
                 if label in Luxurykeys:
                    Comments,Data = Load_GalLery_Textual_Data(Country, Galeries_Matrix[i,j])
                    NbComments.append(len(Comments))
+                
         i+=1
     return NbComments
 
+def Luxury_vs_NonLuxury():
+    Galeries_Matrix = np.array(galeries).reshape(len(Countries),10)
+    LuxuryList = [item for sublist in Luxury for item in sublist]
+
+    NbComments = []
+    Groups = []
+    i = 0
+    for Country in Countries:
+        #print(str(i+1) + ' : ' + Country)
+        for j in range (10):
+            Comments,Data = Load_GalLery_Textual_Data(Country, Galeries_Matrix[i,j])
+            NbComments.append(len(Comments))
+            if Galeries_Matrix[i,j] in LuxuryList:
+               Groups.append('Luxary') 
+            else:
+                Groups.append('NonLuxuary')
+        i+=1
+    return Groups,NbComments
+
 def Hypo5():
-    NbComments = Luxuey_vs_users()
+    Groups,NbComments = Luxury_vs_NonLuxury()
     
+    df = pd.DataFrame({'Groups':Groups,'NbComments':NbComments})
+    
+    
+    #print(stats.f_oneway(df['NbComments'][df['Groups'] == 'Luxary'], 
+    #         df['NbComments'][df['Groups'] == 'NonLuxuary']))
+    df['Groups'].replace({1: 'Luxary', 2: 'NonLuxuary'}, inplace= True)
+    rp.summary_cont(df['Groups'].groupby(df['NbComments']))
+    rp.summary_cont(df['Groups'])
+    
+    print(stats.kruskal(Groups,NbComments))
+    #print(stats.kruskal(df['Groups'].tolist(),df['NbComments'].tolist()))
+    
+    return df
+
+df = Hypo5()
+
+results = ols('Groups ~ C(NbComments)', data=df).fit()
+#print(results.summary())
+
+aov_table = sm.stats.anova_lm(results, typ=2)
+aov_table
