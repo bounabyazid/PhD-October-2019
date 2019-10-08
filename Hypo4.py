@@ -55,4 +55,4 @@ def Hypo4():
     return round(r,2)
 
 #r = Hypo5()
-Sentiments,NbComments = Sentiments_Analysis(0.3)
+#Sentiments,NbComments = Sentiments_Analysis(0.3)

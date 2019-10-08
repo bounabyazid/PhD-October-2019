@@ -8,14 +8,18 @@ import os
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
+from scipy.stats import mstats
+from itertools import repeat
 import researchpy as rp
 import statsmodels.api as sm
+from statistics import mean,median,stdev
+
 from statsmodels.formula.api import ols
-    
+from statsmodels.multivariate.manova import MANOVA
+
 import matplotlib.pyplot as plt
 
 from LoadTextData import Load_GalLery_Textual_Data, Load_GoogleVision_Labels, Load_Google_Labels
-
 from ImgurComments import Countries,galeries
 
 from senti_client import sentistrength
@@ -83,6 +87,13 @@ Luxury = [
           ['75rbKac','ahPtwMS','bvxZ8Th','djCGk6D','MTRo5','vk6QXAM']
           ]
 
+def Senti_List(List):
+    Score = []
+    for label in List:
+        res = senti.get_sentiment(label)
+        Score.append(res['neutral'])
+    return Score
+
 def Luxury_Labels():
     Luxurykeys = []
     i = 0
@@ -96,7 +107,7 @@ def Luxury_Labels():
                Luxurykeys.extend(Labels)
         i+=1
     
-    df = pandas.DataFrame(data={"Luxury keys": sorted(list(set(Luxurykeys)))})
+    df = pd.DataFrame(data={"Luxury keys": sorted(list(set(Luxurykeys)))})
     df.to_csv("Luxury keys.csv", sep=',',index=False, encoding="utf-8")
 
 def Luxury_vs_users():
@@ -116,12 +127,14 @@ def Luxury_vs_users():
         i+=1
     return NbComments
 
-def Luxury_vs_NonLuxury():
+def Luxury_vs_NonLuxury(Sentiment=False):
     Galeries_Matrix = np.array(galeries).reshape(len(Countries),10)
     LuxuryList = [item for sublist in Luxury for item in sublist]
 
     NbComments = []
     Groups = []
+    Sentiments = []
+    
     i = 0
     for Country in Countries:
         #print(str(i+1) + ' : ' + Country)
@@ -132,30 +145,102 @@ def Luxury_vs_NonLuxury():
                Groups.append('Luxary') 
             else:
                 Groups.append('NonLuxuary')
+            if Sentiment:
+               Sentiments.append(Senti_List(Comments))
         i+=1
-    return Groups,NbComments
+    if Sentiment:
+       return Groups,NbComments,Sentiments
+    else:
+        return Groups,NbComments
 
 def Hypo5():
-    Groups,NbComments = Luxury_vs_NonLuxury()
+    Groups,NbComments = Luxury_vs_NonLuxury(False)
     
     df = pd.DataFrame({'Groups':Groups,'NbComments':NbComments})
     
     
-    #print(stats.f_oneway(df['NbComments'][df['Groups'] == 'Luxary'], 
-    #         df['NbComments'][df['Groups'] == 'NonLuxuary']))
-    df['Groups'].replace({1: 'Luxary', 2: 'NonLuxuary'}, inplace= True)
-    rp.summary_cont(df['Groups'].groupby(df['NbComments']))
-    rp.summary_cont(df['Groups'])
-    
+    print(stats.f_oneway(df['NbComments'][df['Groups'] == 'Luxary'], 
+             df['NbComments'][df['Groups'] == 'NonLuxuary']))
+   
+    #df['Groups'].replace({1: 'Luxary', 2: 'NonLuxuary'}, inplace= True)
+        
     print(stats.kruskal(Groups,NbComments))
     #print(stats.kruskal(df['Groups'].tolist(),df['NbComments'].tolist()))
-    
+    maov = MANOVA.from_formula('Groups ~ C(NbComments)', data=df)
+    print(maov.mv_test())
+
+    results = ols('NbComments ~ Groups', data=df).fit()
+    print(results.summary())
+    aov_table = sm.stats.anova_lm(results, typ=2)
+    print(aov_table)
     return df
 
-df = Hypo5()
+def KruskalTest(Type = 'NbComments'):   
+    if Type == 'NbComments':
+       Groups,NbComments = Luxury_vs_NonLuxury(False)
 
-results = ols('Groups ~ C(NbComments)', data=df).fit()
-#print(results.summary())
+       df = pd.DataFrame({'Groups':Groups,'NbComments':NbComments})
+       df['Groups'].replace({'Luxary': 1, 'NonLuxuary': 2}, inplace= True)
+      
+       Col_1 = df['NbComments'].tolist()
+       Col_2 = df['Groups'].tolist()    
+    else:
+        Groups,NbComments,Sentiments = Luxury_vs_NonLuxury(True)
+        SGroups = []
+        for i in range(0,len(Groups)):
+            SGroups.extend(repeat(Groups[i], len(Sentiments[i])))
+        GSentiments = [float(item) for sublist in Sentiments for item in sublist]
+        df = pd.DataFrame({'Groups':SGroups,'Sentiments':GSentiments})
+        df['Groups'].replace({'Luxary': 1, 'NonLuxuary': 2}, inplace= True)
 
-aov_table = sm.stats.anova_lm(results, typ=2)
-aov_table
+        Col_1 = df['Sentiments'].tolist()
+        Col_2 = df['Groups'].tolist()    
+    print("Kruskal Wallis H-test "+Type+" test:")
+ 
+    H, pval = mstats.kruskalwallis(Col_1, Col_2)
+
+    print("H-statistic:", H)
+    print("P-Value:", pval)
+
+    if pval < 0.05:
+       print("Reject NULL hypothesis - Significant differences exist between groups.")
+    if pval > 0.05:
+       print("Accept NULL hypothesis - No significant difference between groups.")
+
+    return df
+
+def Mean_Std(Type = 'NbComments'):
+    if Type == 'NbComments':
+       Groups,NbComments = Luxury_vs_NonLuxury(False)
+
+       df = pd.DataFrame({'Groups':Groups,'NbComments':NbComments})
+       df['Groups'].replace({'Luxary': 1, 'NonLuxuary': 2}, inplace= True)
+       
+       NbCommentsLuxury = list(df[df['Groups']==1]['NbComments'].values)
+       print('Luxury : mean = ',mean(NbCommentsLuxury),' meadian = ',median(NbCommentsLuxury),' stdev = ',stdev(NbCommentsLuxury))
+       
+       NbCommentsNoLuxury = list(df[df['Groups']==2]['NbComments'].values)
+       print('Non Luxury : mean = ',mean(NbCommentsNoLuxury),' meadian = ',median(NbCommentsNoLuxury),' stdev = ',stdev(NbCommentsNoLuxury))
+
+    else:
+        Groups,NbComments,Sentiments = Luxury_vs_NonLuxury(True)
+        SGroups = []
+        for i in range(0,len(Groups)):
+            SGroups.extend(repeat(Groups[i], len(Sentiments[i])))
+        GSentiments = [float(item) for sublist in Sentiments for item in sublist]
+        df = pd.DataFrame({'Groups':SGroups,'Sentiments':GSentiments})
+        df['Groups'].replace({'Luxary': 1, 'NonLuxuary': 2}, inplace= True)
+
+        NbSentimentsLuxury = list(df[df['Groups']==1]['Sentiments'].values)
+        print('Luxury : mean = ',mean(NbSentimentsLuxury),' meadian = ',median(NbSentimentsLuxury),' stdev = ',stdev(NbSentimentsLuxury))
+       
+        NbSentimentsNoLuxury = list(df[df['Groups']==2]['Sentiments'].values)
+        print('Non Luxury : mean = ',mean(NbSentimentsNoLuxury),' meadian = ',median(NbSentimentsNoLuxury),' stdev = ',stdev(NbSentimentsNoLuxury))
+
+#df = KruskalTest('NbComments')
+df2 = KruskalTest('Sentiments')
+
+#Mean_Std(Type = 'NbComments')
+#Mean_Std(Type = 'Sentiments')
+
+

@@ -55,6 +55,6 @@ def Sentiments_Analysis():
 def Hypo3():
     NSentiments,NbComments = Sentiments_Analysis()
     r,p = pearsonr(NbComments, NSentiments)
-    return round(r,2)
+    return round(r,2),round(p,2)
 
-r = Hypo3()
+r,p = Hypo3()
