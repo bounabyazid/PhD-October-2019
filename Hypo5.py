@@ -210,6 +210,7 @@ def KruskalTest(Type = 'NbComments'):
     return df
 
 def Mean_Std(Type = 'NbComments'):
+    print('____________________________________________')
     if Type == 'NbComments':
        Groups,NbComments = Luxury_vs_NonLuxury(False)
 
@@ -237,8 +238,62 @@ def Mean_Std(Type = 'NbComments'):
         NbSentimentsNoLuxury = list(df[df['Groups']==2]['Sentiments'].values)
         print('Non Luxury : mean = ',mean(NbSentimentsNoLuxury),' meadian = ',median(NbSentimentsNoLuxury),' stdev = ',stdev(NbSentimentsNoLuxury))
 
+def Plot_Luxury_Proportion():
+    LuxuryL = len([item for sublist in Luxury for item in sublist])
+    NoLuxury = len(galeries)-LuxuryL
+    
+    #plt.bar(['Nature Images','No-Nature Images'], [NatureL,NoNature], color='g')
+    plt.bar(['Luxury Images'], [LuxuryL], color='pink')
+    plt.text('Luxury Images', LuxuryL, LuxuryL, fontsize=12)
+    
+    plt.bar(['No-Luxury Images'], [NoLuxury], color='orange')
+    plt.text('No-Luxury Images', NoLuxury, NoLuxury, fontsize=12)
+    
+    plt.title('Proportion of Luxury and No-Luxury images in Tourism48 Dataset')
+    
+    #plt.xlabel()
+    plt.ylabel('Number of images')
+    plt.savefig('Proportion_of_Luxury_and_No_Luxury_images.eps', format='eps')
+    plt.show()
+    
+def Plot_Luxury_NoLuxury_Proportion():
+    N = 48
+    
+    LUXURY = []
+    NOLUXURY = []
+    
+    Galeries_Matrix = [list(elem) for elem in list(zip(*[iter(galeries)]*10))]
+    #LuxuryList = [item for sublist in Luxury for item in sublist]
+    
+    #CountryGaleries = dict(zip(Countries, Galeries_Matrix))
+    CountryLuxury = dict(zip(Countries, Luxury))
+    
+    for Country in Countries:
+        LUXURY.append(len(CountryLuxury[Country]))
+        NOLUXURY.append(10-len(CountryLuxury[Country]))
+        
+    ind = np.arange(N)    # the x locations for the groups
+    width = 0.35       # the width of the bars: can also be len(x) sequence
+
+    p1 = plt.bar(ind, LUXURY, width)
+    p2 = plt.bar(ind, NOLUXURY, width, bottom=LUXURY)
+
+    plt.xlabel('Tourism48 Countries')
+    plt.ylabel('Galeries')
+    plt.title('Luxuriousness proportion')
+    #plt.xticks(ind, Countries)
+    #plt.yticks(np.arange(0, 81, 10))
+    plt.legend((p1[0], p2[0]), ('Luxury', 'No-Luxury'))
+    plt.savefig('Proportion_Luxury_images.eps', format='eps')
+    plt.show()
+    
+    return LUXURY,NOLUXURY
+    
 #df = KruskalTest('NbComments')
-df2 = KruskalTest('Sentiments')
+
+#Plot_Luxury_Proportion()
+LUXURY,NOLUXURY = Plot_Luxury_NoLuxury_Proportion()
+#df2 = KruskalTest('Sentiments')
 
 #Mean_Std(Type = 'NbComments')
 #Mean_Std(Type = 'Sentiments')

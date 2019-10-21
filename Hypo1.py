@@ -103,10 +103,10 @@ def Hypo1():
     Sentiments,NbComments = Sentiments_Analysis()
     
     r,p = pearsonr(NbComments, QScores)
-    print('Correlation between Images quialty vs Comments Number = ',round(r,2))
+    print('Correlation between Images quialty vs Comments Number = ',round(r,2), round(p,2))
     
     r,p = pearsonr(Sentiments, QScores)
-    print('Correlation between Images quialty vs Sentiments = ',round(r,2))
+    print('Correlation between Images quialty vs Sentiments = ',round(r,2), round(p,2))
 
     return QScores, NbComments, Sentiments
 

@@ -116,4 +116,58 @@ def Hypo2():
     print('Nature = ',round(mean(NaturePics.values()),2))
     print('Non Nature = ',round(mean(NoNaturePics.values()),2))
     return NaturePics ,NoNaturePics
-NaturePics ,NoNaturePics = Hypo2()
+
+def Plot_Nature_Proportion():
+    NatureL = len([item for sublist in Nature for item in sublist])
+    NoNature = len(galeries)-NatureL
+    
+    #plt.bar(['Nature Images','No-Nature Images'], [NatureL,NoNature], color='g')
+    plt.bar(['Nature Images'], [NatureL], color='g')
+    plt.text('Nature Images', NatureL, NatureL, fontsize=12)
+    
+    plt.bar(['No-Nature Images'], [NoNature], color='b')
+    plt.text('No-Nature Images', NoNature, NoNature, fontsize=12)
+    
+    plt.title('Proportion of Nature and No-Nature images in Tourism48 Dataset')
+    
+    #plt.xlabel()
+    plt.ylabel('Number of images')
+    plt.savefig('Proportion_of_Nature_and_No_Nature_images.eps', format='eps')
+    plt.show()
+    
+def Plot_Nature_NoNature_Proportion():
+    N = 48
+    
+    NATURE = []
+    NONATURE = []
+    
+    Galeries_Matrix = [list(elem) for elem in list(zip(*[iter(galeries)]*10))]
+    #LuxuryList = [item for sublist in Luxury for item in sublist]
+    
+    #CountryGaleries = dict(zip(Countries, Galeries_Matrix))
+    CountryLuxury = dict(zip(Countries, Nature))
+    
+    for Country in Countries:
+        NATURE.append(len(CountryLuxury[Country]))
+        NONATURE.append(10-len(CountryLuxury[Country]))
+        
+    ind = np.arange(N)    # the x locations for the groups
+    width = 0.35       # the width of the bars: can also be len(x) sequence
+
+    p1 = plt.bar(ind, NATURE, width)
+    p2 = plt.bar(ind, NONATURE, width, bottom=NATURE)
+
+    plt.xlabel('Tourism48 Countries')
+    plt.ylabel('Galeries')
+    plt.title('Nature images proportion')
+    #plt.xticks(ind, Countries)
+    #plt.yticks(np.arange(0, 81, 10))
+    plt.legend((p1[0], p2[0]), ('Nature', 'No-Nature'))
+    plt.savefig('Proportion_Nature_images.eps', format='eps')
+    plt.show()
+    
+    return NATURE,NONATURE
+
+#NaturePics ,NoNaturePics = Hypo2()
+#Plot_Nature_Proportion()
+NATURE,NONATURE = Plot_Nature_NoNature_Proportion()
