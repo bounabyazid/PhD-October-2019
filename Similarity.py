@@ -20,7 +20,7 @@ from LDA import Preprocessing,remove_stopwords,sent_to_words,lemmatization,Prepa
 
 from ImgurComments import Countries,galeries
     
-DataSet = '/home/polo/.config/spyder-py3/PhD/Tourism30'
+DataSet = '/home/polo/.config/spyder-py3/PhD/PhD October 2019/Tourism48'
 
 def LoadTextData(Country,gallery_id):
     S ,Data  = Load_GalLery_Textual_Data(Country,gallery_id)
@@ -134,13 +134,8 @@ def FuzzyWazzy_SimilarityOverAll(Country,gallery_id):
     return labels,comments,overall
 
 def keyWords_Labels_Matching(Country,gallery_id):
-    S ,Data  = Load_GalLery_Textual_Data(Country,gallery_id)
+    DocList ,Data  = Load_GalLery_Textual_Data(Country,gallery_id)
     S1 ,Data1  = Load_GoogleVision_Labels(Country,gallery_id)
-
-    DocList = S[1]
-    DocList.append(S[0])
-    for s in S[2]:
-        DocList.extend(s)
         
     data_lemmatized = [w for doc in PrepareData(DocList) for w in doc]
     
@@ -212,7 +207,7 @@ def OverAll_Text_Similarity_DataSet():
         Similarities = {}
         
         for j in range (10):
-            #print(Galeries_Matrix[i,j])
+            print(Galeries_Matrix[i,j])
             #labels,comments,overall = FuzzyWazzy_SimilarityOverAll(Country,Galeries_Matrix[i,j])
             labels,comments,overall = keyWords_Labels_Matching(Country,Galeries_Matrix[i,j])
             
@@ -224,21 +219,24 @@ def OverAll_Text_Similarity_DataSet():
         Similarities['comments'] = Scomments
         Similarities['overall'] = Soverall
         
-        with open(DataSet+'/'+Country+'/Similarities.json', 'w') as outfile:
+        with open('LDA Similarities/'+Country+'.json', 'w') as outfile:
              json.dump(Similarities, outfile)
         #break             
         i+=1
 
 def Histogramme(Country):
-    with open(DataSet+'/'+Country+'/Similarities.json') as data_file:    
+    with open('LDA Similarities/'+Country+'.json') as data_file:    
          Data = json.load(data_file)
     #plt.hist(Data['overall'])
     
     x = np.arange(10)
-    plt.bar(x, Data['overall'])
+    plt.bar(x, Data['labels'])
     plt.xticks(x+.2, x)
 
 #OverAll_Text_Similarity_DataSet()
 #Histogramme('Algeria')
 
-labels,comments,overall,setA,setB = keyWords_Labels_Matching('Algeria','x6TwpSQ')
+#labels,comments,overall,setA,setB = keyWords_Labels_Matching('Algeria','x6TwpSQ')
+    
+S ,Data  = Load_GalLery_Textual_Data('Algeria','x6TwpSQ')
+#S1 ,Data1  = Load_GoogleVision_Labels('Algeria','x6TwpSQ')
