@@ -9,8 +9,10 @@ Created on Thu Feb 21 11:25:14 2019
 
 import re
 import json
+import truecase
 
 import numpy as np
+from statistics import mean
 import matplotlib.pyplot as plt
 from ImgurComments import Countries,galeries
 
@@ -102,7 +104,7 @@ def find_proper_nouns(Tagged_Text):
 #_______________________________________________________________
 
 def get_entities(DocList):
-    ListDoc = [Preprocessing(sent) for sent in DocList]
+    ListDoc = [Preprocessing(truecase.get_true_case(sent)) for sent in DocList]
     'https://www.geeksforgeeks.org/python-named-entity-recognition-ner-using-spacy/'
     
     black_list = ['CARDINAL','ORDINAL','DATE','ORG']
@@ -124,43 +126,23 @@ def FuzzyWazzy_SimilarityOverAll(Country,gallery_id):
     setB = get_entities(S)
     
     if len(setB) == 0:
-       return 0, 0, 0 
+       return 0.0
     
     overlap = 0
-    universe = 0
     
     for l in setA:
         for w in setB:
             if fuzz.ratio(l, w) >= 75:
                overlap += 1
     
-    universe = []
-    uni = list(set(setA) | set(setB))
-    for i in range(len(uni)):
-        if uni[i] not in universe:
-           universe.append(uni[i]) 
-        for j in range(i+1,len(uni)):
-            if fuzz.ratio(uni[i], uni[j]) >= 80 and uni[j] not in universe:
-               universe.append(uni[j])
+    Similarity = round(float(overlap) / len(setA) * 100., 2)
                
-    universe = len(universe)       
-
-    labels = round(float(overlap) / len(setA) * 100., 2)
-    comments = round(float(overlap) / len(setB) * 100., 2)
-    overall = round(float(overlap) / float(universe) * 100., 2)
-        
 #    print ('overlap = ',overlap)
-#    print ('universe = ',universe)
-#    
 #    print ('Labels = ',len(setA))
 #    print ('Comments = ',len(setB))
-#
-#    print ('overlap(Labels,Comments)/Labels = ',labels)
-#    print ('overlap(Labels,Comments)/Comments = ',comments)
-    
-    print ('overlap(Labels,Comments)/Universe(Labels,Comments) = ',overall)
-    
-    return labels,comments,overall
+#    print ('overlap(Labels,Comments)/Labels = ',Similarity)
+        
+    return Similarity
 #_______________________________________________________________
 
 def OverAll_Text_Similarity_DataSet():
@@ -170,40 +152,70 @@ def OverAll_Text_Similarity_DataSet():
     i = 0
     for Country in Countries:
         print ('============='+Country+'==============')
-
         Slabels = []
-        Scomments = []
-        Soverall = []
-        
         Similarities = {}
-        
         for j in range (10):
-            print(Galeries_Matrix[i,j])
-            labels,comments,overall = FuzzyWazzy_SimilarityOverAll(Country,Galeries_Matrix[i,j])
+            #print(Galeries_Matrix[i,j])
+            Similarity = FuzzyWazzy_SimilarityOverAll(Country,Galeries_Matrix[i,j])
+            Slabels.append(Similarity)
             
-            Slabels.append(labels)
-            Scomments.append(comments)
-            Soverall.append(overall)
-        
         Similarities['labels'] = Slabels
-        Similarities['comments'] = Scomments
-        Similarities['overall'] = Soverall
         
-        with open('Similarities/'+Country+'.json', 'w') as outfile:
+        with open('Similarities NER/'+Country+'.json', 'w') as outfile:
              json.dump(Similarities, outfile)
         #break             
         i+=1
 
 def Histogramme(Country):
-    with open('Similarities/'+Country+'.json') as data_file:    
+    with open('Similarities NER/'+Country+'.json') as data_file:    
          Data = json.load(data_file)
     #plt.hist(Data['overall'])
     
     x = np.arange(10)
-    plt.bar(x, Data['overall'])
+    plt.bar(x, Data['labels'])
     plt.xticks(x+.2, x)
+    
+def Globalmean():
+    means = []
+    for Country in Countries:
+        #print ('============='+Country+'==============')
+        with open('Similarities NER/'+Country+'.json') as data_file:    
+             Data = json.load(data_file)
+        means.append(round(mean(Data['labels']), 2))
+
+    x = np.arange(48)
+    plt.bar(x, means)
+    plt.xticks(x+.2, x)
+    
+def GlobalHistogram():
+    means = []
+    for Country in Countries:
+        #print ('============='+Country+'==============')
+        with open('Similarities NER/'+Country+'.json') as data_file:    
+             Data = json.load(data_file)
+        means.append(Data['labels'])
+        
+    meanGaleries = np.mean(means, axis=0)
+    print(meanGaleries)
+    x = np.arange(10)
+    plt.bar(x, meanGaleries)
+    plt.xticks(x+.2, x)
+
 #FuzzyWazzy_SimilarityOverAll('Algeria','6aCY1be')
-OverAll_Text_Similarity_DataSet()
+#OverAll_Text_Similarity_DataSet()
 
 #S ,Data  = Load_GalLery_Textual_Data('Algeria','6aCY1be')
 #labels ,Data1  = Load_GoogleVision_Labels('Algeria','6aCY1be')
+
+#Similarity = FuzzyWazzy_SimilarityOverAll('Cambodia','m2TvHjv')
+#S ,Data  = Load_GalLery_Textual_Data('Cambodia','m2TvHjv')
+#labels ,Data1  = Load_GoogleVision_Labels('Cambodia','m2TvHjv')
+#
+#setA = list(set([x.lower() for x in labels]))
+#setB = get_entities(S)
+
+
+#Histogramme('France')
+
+#Globalmean()
+GlobalHistogram()
