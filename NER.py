@@ -8,6 +8,7 @@ Created on Thu Feb 21 11:25:14 2019
 'https://www.machinelearningplus.com/nlp/topic-modeling-gensim-python/'
 
 import re
+import csv
 import json
 import truecase
 
@@ -103,6 +104,25 @@ def find_proper_nouns(Tagged_Text):
 
 #_______________________________________________________________
 
+def get_Captions_Entities():
+    Captions = {}
+    nlp = spacy.load('en_core_web_sm')
+
+    with open('Captions/Mira_ToBeLabeled.csv', newline='', encoding='ISO-8859-1') as f:# encoding='ISO-8859-1'
+         reader = csv.reader(f)
+         i=0
+         for row in reader:
+             if i == 0:
+                i=1
+             else:
+                 #doc = Preprocessing(truecase.get_true_case(row[3]))
+                 doc = truecase.get_true_case(row[3])
+                 Entities = [ent.text.lower() for ent in nlp(doc).ents]
+                 Entities = list(set([' '.join(List) for List in remove_stopwords(Entities) if len(List)>0]))
+                 Captions[row[2]] = Entities
+    return Captions
+#_______________________________________________________________
+
 def get_entities(DocList):
     ListDoc = [Preprocessing(truecase.get_true_case(sent)) for sent in DocList]
     'https://www.geeksforgeeks.org/python-named-entity-recognition-ner-using-spacy/'
@@ -178,14 +198,35 @@ def Histogramme(Country):
 def Globalmean():
     means = []
     for Country in Countries:
-        #print ('============='+Country+'==============')
         with open('Similarities NER/'+Country+'.json') as data_file:    
              Data = json.load(data_file)
-        means.append(round(mean(Data['labels']), 2))
+             List = [item for item in Data['labels'] if item >= 10.]
+             if len(List) == 0:
+                List = [max(Data['labels'])] 
+        means.append(round(np.mean(List), 2))
+    #return means
 
-    x = np.arange(48)
-    plt.bar(x, means)
-    plt.xticks(x+.2, x)
+    #meanCountries = np.around(np.mean(means, axis=1), 2)
+    meanCountries = means
+#    x = np.arange(48)
+#    plt.bar(x, means)
+#    plt.xticks(x+.2, x)
+    for i in meanCountries:
+        print(i)
+    x = np.arange(1, 49)
+    
+    fig, ax = plt.subplots()    
+    width = 0.5 # the width of the bars 
+    ax.bar(x, meanCountries, width, color="azure", edgecolor='blue')
+    #ax.set_xticks(x)
+
+    for a,b in zip(x, meanCountries):
+        plt.text(a-width/2.0, b+0.1, str(b))
+    
+    plt.title('Mean similarity values Tourism 48 dataset')
+    plt.xlabel('Countries')
+    plt.ylabel('Percentage of overlap')  
+    plt.savefig('NerMeanCountries.eps', dpi=300, format='eps', bbox_inches='tight')
     
 def GlobalHistogram():
     means = []
@@ -195,12 +236,26 @@ def GlobalHistogram():
              Data = json.load(data_file)
         means.append(Data['labels'])
         
-    meanGaleries = np.mean(means, axis=0)
+    meanGaleries = np.around(np.mean(means, axis=0), 2)
+    
     print(meanGaleries)
-    x = np.arange(10)
-    plt.bar(x, meanGaleries)
-    plt.xticks(x+.2, x)
-
+    x = np.arange(1, 11)
+    
+    fig, ax = plt.subplots()    
+    width = 0.75 # the width of the bars 
+    ax.bar(x, meanGaleries, width, color="azure", edgecolor='blue')
+    #ax.set_yticks(x+width/2)
+    ax.set_xticks(x,rotation = (90))
+    for a,b in zip(x, meanGaleries):
+        plt.text(a-width/2.0, b+0.1, str(b))
+    
+    plt.title('Mean similarity values Tourism 48 dataset')
+    plt.xlabel('Galeries')
+    plt.ylabel('Similarity scores')  
+#    plt.bar(x, meanGaleries, color=(0.1, 0.1, 0.1, 0.1), edgecolor='blue')
+#    plt.xticks(x, x)
+    plt.savefig('NerMeanSimilarity.eps', dpi=300, format='eps', bbox_inches='tight')
+    
 #FuzzyWazzy_SimilarityOverAll('Algeria','6aCY1be')
 #OverAll_Text_Similarity_DataSet()
 
@@ -217,5 +272,7 @@ def GlobalHistogram():
 
 #Histogramme('France')
 
-#Globalmean()
-GlobalHistogram()
+meanCountries = Globalmean()
+#GlobalHistogram()
+
+#Captions = get_Captions_Entities()
